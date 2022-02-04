@@ -266,7 +266,7 @@ def process_content(content, id):
 def process_article(article):
     non_empty_lines  = [l for l in article.strip().split("\n") if l != ""]
     header = non_empty_lines[0]
-    id, is_valid_header = str(1), True#  process_header(header)
+    id, is_valid_header = process_header(header)
 
     if not is_valid_header:
         logger.info('Invalid header in doc id: ' + str(id)+ '     header:   ' +  header)
@@ -349,32 +349,27 @@ def process_wiki_folder(input_folder, output_folder,train_ratio,test_ratio):
     total_train_size = 0
     total_dev_size = 0
     total_test_size = 0
-    folders = ''
-    # [o for o in os.listdir(input_folder) if os.path.isdir(os.path.join(input_folder, o))]
+    folders = [o for o in os.listdir(input_folder) if os.path.isdir(os.path.join(input_folder, o))]
     total_created_articles = 0
     total_processed_articles = 0
     previous_debug = 0
     forbidden_train_ids = get_forbidden_train_ids()
 
-    import glob
-    # ensure reqursive
-    files = glob.glob(input_folder + '*/*')
-
-    # for folder in folders:
-    #     full_folder_path = os.path.join(input_folder, folder)
-    #     if not os.path.exists(output_folder):
-    #         os.makedirs(output_folder)
-    #     files = get_wiki_files(full_folder_path)
-    for file in files:
-        created_articles,  processed_articles, train_size, dev_size, test_size = process_wiki_file(file,  output_folder, float(train_ratio), float(test_ratio), forbidden_train_ids)
-        total_train_size += train_size
-        total_dev_size += dev_size
-        total_test_size += test_size
-        total_created_articles += created_articles
-        total_processed_articles += processed_articles
-        if (total_created_articles - previous_debug > 2500):
-            previous_debug = total_created_articles
-            print ('created ' + str(total_created_articles) + ' wiki articles, out of ' + str(total_processed_articles) + ' processed articles')
+    for folder in folders:
+        full_folder_path = os.path.join(input_folder, folder)
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+        files = get_wiki_files(full_folder_path)
+        for file in files:
+            created_articles,  processed_articles, train_size, dev_size, test_size = process_wiki_file(file,  output_folder, float(train_ratio), float(test_ratio), forbidden_train_ids)
+            total_train_size += train_size
+            total_dev_size += dev_size
+            total_test_size += test_size
+            total_created_articles += created_articles
+            total_processed_articles += processed_articles
+            if (total_created_articles - previous_debug > 2500):
+                previous_debug = total_created_articles
+                print ('created ' + str(total_created_articles) + ' wiki articles, out of ' + str(total_processed_articles) + ' processed articles')
     total_samples = total_train_size + total_dev_size + total_test_size
     print 'total_samples = ', str(total_samples)
     print "#train = ",total_train_size,"ratio: ","{:.2f}".format(total_train_size / float(total_samples))
@@ -475,7 +470,7 @@ def main():
     #     os.makedirs(args.output)
 
     # create file per each wiki value from the extracted dump
-    input_folder = '/home/lizazhemchuzhina/text-segmentation/data/data'
+    input_folder = 'data/wiki_727K/wiki_727'
     output_folder = '/home/lizazhemchuzhina/text-segmentation/data/out'
     train = 0.8
     test = 0.1
