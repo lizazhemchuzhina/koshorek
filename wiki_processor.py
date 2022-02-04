@@ -266,7 +266,7 @@ def process_content(content, id):
 def process_article(article):
     non_empty_lines  = [l for l in article.strip().split("\n") if l != ""]
     header = non_empty_lines[0]
-    id, is_valid_header = process_header(header)
+    id, is_valid_header = str(1), True#  process_header(header)
 
     if not is_valid_header:
         logger.info('Invalid header in doc id: ' + str(id)+ '     header:   ' +  header)
@@ -349,26 +349,32 @@ def process_wiki_folder(input_folder, output_folder,train_ratio,test_ratio):
     total_train_size = 0
     total_dev_size = 0
     total_test_size = 0
-    folders =  [o for o in os.listdir(input_folder) if os.path.isdir(os.path.join(input_folder, o))]
+    folders = ''
+    # [o for o in os.listdir(input_folder) if os.path.isdir(os.path.join(input_folder, o))]
     total_created_articles = 0
     total_processed_articles = 0
     previous_debug = 0
     forbidden_train_ids = get_forbidden_train_ids()
-    for folder in folders:
-        full_folder_path = os.path.join(input_folder, folder)
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
-        files = get_wiki_files(full_folder_path)
-        for file in files:
-            created_articles,  processed_articles, train_size, dev_size, test_size = process_wiki_file(file,  output_folder, float(train_ratio), float(test_ratio), forbidden_train_ids)
-            total_train_size += train_size
-            total_dev_size += dev_size
-            total_test_size += test_size
-            total_created_articles += created_articles
-            total_processed_articles += processed_articles
-            if (total_created_articles - previous_debug > 2500):
-                previous_debug = total_created_articles
-                print ('Created ' + str(total_created_articles) + ' wiki articles, out of ' + str(total_processed_articles) + ' processed articles')
+
+    import glob
+    # ensure reqursive
+    files = glob.glob(input_folder + '*/*')
+
+    # for folder in folders:
+    #     full_folder_path = os.path.join(input_folder, folder)
+    #     if not os.path.exists(output_folder):
+    #         os.makedirs(output_folder)
+    #     files = get_wiki_files(full_folder_path)
+    for file in files:
+        created_articles,  processed_articles, train_size, dev_size, test_size = process_wiki_file(file,  output_folder, float(train_ratio), float(test_ratio), forbidden_train_ids)
+        total_train_size += train_size
+        total_dev_size += dev_size
+        total_test_size += test_size
+        total_created_articles += created_articles
+        total_processed_articles += processed_articles
+        if (total_created_articles - previous_debug > 2500):
+            previous_debug = total_created_articles
+            print ('created ' + str(total_created_articles) + ' wiki articles, out of ' + str(total_processed_articles) + ' processed articles')
     total_samples = total_train_size + total_dev_size + total_test_size
     print 'total_samples = ', str(total_samples)
     print "#train = ",total_train_size,"ratio: ","{:.2f}".format(total_train_size / float(total_samples))
@@ -445,44 +451,51 @@ def trainTestDev(destFolder, train_size, test_size):
     removeEmptyFolders(destFolder)
 
 
-def main (args):
+def main():
     global num_sentneces_for_avg
     global sum_sentneces_for_avg
-    if not os.path.exists(args.temp):
-        os.makedirs(args.temp)
-    # execute extraction of wikipedia dump
-    cmd = ['python', str(Path(__file__).parent / 'wiki_extractor.py'), '-s', '-o', args.temp, '--article_count', str(args.article_count),'--lists']
-    print cmd
+    # if not os.path.exists(args.temp):
+    #     os.makedirs(args.temp)
+    # # execute extraction of wikipedia dump
+    # cmd = ['python', str(Path(__file__).parent / 'wiki_extractor.py'), '-s', '-o', args.temp, '--article_count', str(args.article_count),'--lists']
+    # print cmd
+    #
+    # if args.processes:
+    #     cmd += ['--processes', args.processes]
+    #
+    # cmd += [args.input]
+    #
+    # if not args.no_extractor:
+    #     subprocess.call(cmd)
+    #     print ("Finisehd extractor")
+    #
+    #
+    #
+    # if not os.path.exists(args.output):
+    #     os.makedirs(args.output)
 
-    if args.processes:
-        cmd += ['--processes', args.processes]
-
-    cmd += [args.input]
-
-    if not args.no_extractor: 
-        subprocess.call(cmd)
-        print ("Finisehd extractor")
-
-
-
-    if not os.path.exists(args.output):
-        os.makedirs(args.output)
     # create file per each wiki value from the extracted dump
-    process_wiki_folder(args.temp, args.output,args.train, args.test)
+    input_folder = '/home/lizazhemchuzhina/text-segmentation/data/data'
+    output_folder = '/home/lizazhemchuzhina/text-segmentation/data/out'
+    train = 0.8
+    test = 0.1
+
+    process_wiki_folder(input_folder,output_folder, train, test)
 
     print ("Number of processed sentences: " +  str(num_sentneces_for_avg))
-    print "avg len sentence = " + str(sum_sentneces_for_avg / float(num_sentneces_for_avg))
+    print ("avg len sentence = " + str(sum_sentneces_for_avg / float(num_sentneces_for_avg)))
     print ('done')
 
 if __name__ == '__main__':
-    parser = ArgumentParser()
-    parser.add_argument('--input', help='Path to wikipedia dump', required=True)
-    parser.add_argument('--processes', help='Num of processors to use in wiki_extractor')
-    parser.add_argument('--no_extractor', help='Skip wiki-extractor', action='store_true')
-    parser.add_argument('--temp', help='folder to save temporal files', required=True)
-    parser.add_argument('--output', help='output folder', required=True)
-    parser.add_argument('--train', help='train size ratio', required=True)
-    parser.add_argument('--test', help='test size ratio', required=True)
-    parser.add_argument("--article_count", help = 'max number of wikipedia articles to extract', default=1000000)
-    main(parser.parse_args())
+    # parser = ArgumentParser()
+    # parser.add_argument('--input', help='Path to wikipedia dump', required=True)
+    # parser.add_argument('--processes', help='Num of processors to use in wiki_extractor')
+    # parser.add_argument('--no_extractor', help='Skip wiki-extractor', action='store_true')
+    # parser.add_argument('--temp', help='folder to save temporal files', required=True)
+    # parser.add_argument('--output', help='output folder', required=True)
+    # parser.add_argument('--train', help='train size ratio', required=True)
+    # parser.add_argument('--test', help='test size ratio', required=True)
+    # parser.add_argument("--article_count", help = 'max number of wikipedia articles to extract', default=1000000)
+    # main(parser.parse_args())
+    main()
 
