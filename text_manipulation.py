@@ -121,4 +121,3 @@ def word_model(word, model):
         else:
             #print ('Word missing w2v: ' + word)
             return model['UNK'].reshape(1, 300)
-
